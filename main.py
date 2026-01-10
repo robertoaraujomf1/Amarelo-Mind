@@ -3,11 +3,11 @@ import os
 from PySide6.QtWidgets import (QMainWindow, QApplication, QGraphicsView, 
                              QGraphicsScene, QFileDialog, QToolBar,
                              QStatusBar, QWidget, QHBoxLayout, QLineEdit, 
-                             QLabel, QFrame)
+                             QLabel, QFrame, QStyle)
 from PySide6.QtCore import Qt, QRectF, QSize, QPointF
 from PySide6.QtGui import QPainter, QColor, QImage, QIcon, QAction, QWheelEvent
 
-# Importações dos módulos que serão construídos na sequência exata
+# Importações dos módulos que seguem a mesma regra de blindagem
 try:
     from items.shapes import StyledNode as MindMapNode
     from core.connection import SmartConnection
@@ -16,7 +16,7 @@ except ImportError:
     SmartConnection = None
 
 class CustomView(QGraphicsView):
-    """Subclasse para gerenciar Zoom e interações de Mouse avançadas"""
+    """Gerencia Zoom e Navegação"""
     def wheelEvent(self, event: QWheelEvent):
         zoom_in_factor = 1.25
         zoom_out_factor = 1 / zoom_in_factor
@@ -29,10 +29,10 @@ class AmareloMainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         
-        self.setWindowTitle("Amarelo Mind - Professional Edition")
+        self.setWindowTitle("Amarelo Mind")
         self.resize(1280, 720)
         
-        # --- Estilização CSS Moderna (Foco em Contraste e Curvas) ---
+        # Design Moderno: Fundo Grafite com acentos em Amarelo
         self.setStyleSheet("""
             QMainWindow { background-color: #121212; }
             QToolBar { 
@@ -47,58 +47,49 @@ class AmareloMainWindow(QMainWindow):
                 font-family: 'Segoe UI', sans-serif;
                 border-top: 1px solid #333;
             }
-            QLabel { color: #aaaaaa; font-size: 11px; text-transform: uppercase; }
+            QLabel { color: #888888; font-size: 10px; font-weight: bold; }
             QLineEdit { 
                 background-color: #2d2d2d; 
                 color: #f2f71d; 
                 border: 1px solid #444; 
-                border-radius: 6px; 
+                border-radius: 4px; 
                 padding: 4px;
-                font-weight: bold;
             }
             QLineEdit:focus { border: 1px solid #f2f71d; }
         """)
 
-        # 1. Configuração do Canvas (Cena e View Customizada)
+        # 1. Canvas
         self.scene = QGraphicsScene(-5000, -5000, 10000, 10000)
         self.view = CustomView(self.scene)
-        
-        # Engine de Renderização
-        self.view.setRenderHints(
-            QPainter.Antialiasing | 
-            QPainter.SmoothPixmapTransform | 
-            QPainter.TextAntialiasing
-        )
-        
-        self.view.setBackgroundBrush(QColor("#1a1a1a")) # Fundo grafite profundo
+        self.view.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform | QPainter.TextAntialiasing)
+        self.view.setBackgroundBrush(QColor("#1a1a1a"))
         self.view.setFrameStyle(QFrame.NoFrame)
-        self.view.setDragMode(QGraphicsView.RubberBandDrag) # Seleção por área
+        self.view.setDragMode(QGraphicsView.RubberBandDrag)
         self.setCentralWidget(self.view)
 
-        # 2. Inicialização da Interface
+        # 2. Interface
         self.setup_toolbar()
         self.setup_statusbar()
         
-        # Conexão de Eventos Globais
         self.scene.selectionChanged.connect(self.on_selection_changed)
 
     def setup_toolbar(self):
-        """Barra de ferramentas minimalista com ícones padrão do sistema"""
+        """Toolbar Moderna com ícones corrigidos para PySide6"""
         self.toolbar = QToolBar()
         self.toolbar.setIconSize(QSize(28, 28))
         self.toolbar.setMovable(False)
-        self.addToolBar(Qt.TopToolBarArea, self.toolbar)
+        self.addToolBar(Qt.ToolBarArea.TopToolBarArea, self.toolbar)
 
-        # Ação: Adicionar Nó
-        icon_node = self.style().standardIcon(Qt.StandardPixmap.SP_FileIcon)
+        # SP_FileIcon -> Adicionar Nó
+        icon_node = self.style().standardIcon(QStyle.StandardPixmap.SP_FileIcon)
         self.act_add = QAction(icon_node, "", self)
-        self.act_add.setToolTip("Novo Objeto (N)")
+        self.act_add.setToolTip("Novo Nó (N)")
         self.act_add.setShortcut("N")
         self.act_add.triggered.connect(self.add_node)
         self.toolbar.addAction(self.act_add)
 
-        # Ação: Conectar
-        icon_conn = self.style().standardIcon(Qt.StandardPixmap.SP_CommandLink)
+        # SP_CommandLink -> Conectar
+        icon_conn = self.style().standardIcon(QStyle.StandardPixmap.SP_CommandLink)
         self.act_conn = QAction(icon_conn, "", self)
         self.act_conn.setToolTip("Conectar Selecionados (C)")
         self.act_conn.setShortcut("C")
@@ -107,16 +98,15 @@ class AmareloMainWindow(QMainWindow):
 
         self.toolbar.addSeparator()
 
-        # Ação: Exportar
-        icon_exp = self.style().standardIcon(Qt.StandardPixmap.SP_DialogSaveButton)
+        # SP_DialogSaveButton -> Exportar
+        icon_exp = self.style().standardIcon(QStyle.StandardPixmap.SP_DialogSaveButton)
         self.act_exp = QAction(icon_exp, "", self)
-        self.act_exp.setToolTip("Exportar PNG (Ctrl+E)")
+        self.act_exp.setToolTip("Exportar Imagem (Ctrl+E)")
         self.act_exp.setShortcut("Ctrl+E")
         self.act_exp.triggered.connect(self.export_map)
         self.toolbar.addAction(self.act_exp)
 
     def setup_statusbar(self):
-        """Painel numérico de precisão na barra inferior"""
         self.status = QStatusBar()
         self.setStatusBar(self.status)
         
@@ -126,27 +116,25 @@ class AmareloMainWindow(QMainWindow):
         
         self.in_x = QLineEdit(); self.in_y = QLineEdit()
         self.in_w = QLineEdit(); self.in_h = QLineEdit()
-        self.inputs = {"POS X": self.in_x, "POS Y": self.in_y, "LARG": self.in_w, "ALT": self.in_h}
+        self.inputs = {"X": self.in_x, "Y": self.in_y, "W": self.in_w, "H": self.in_h}
 
         for label, edit in self.inputs.items():
             layout.addWidget(QLabel(label))
-            edit.setFixedWidth(65)
+            edit.setFixedWidth(60)
             edit.returnPressed.connect(self.apply_manual_changes)
             layout.addWidget(edit)
 
         self.status.addPermanentWidget(container)
 
     def keyPressEvent(self, event):
-        """Atalhos de Teclado Globais"""
-        if event.key() == Qt.Key_Delete:
+        if event.key() == Qt.Key.Key_Delete:
             for item in self.scene.selectedItems():
                 self.scene.removeItem(item)
-        elif event.key() == Qt.Key_Escape:
+        elif event.key() == Qt.Key.Key_Escape:
             self.scene.clearSelection()
         super().keyPressEvent(event)
 
     def on_selection_changed(self):
-        """Atualiza a UI quando um objeto é selecionado"""
         sel = self.scene.selectedItems()
         if len(sel) == 1 and hasattr(sel[0], 'rect'):
             node = sel[0]
@@ -158,7 +146,6 @@ class AmareloMainWindow(QMainWindow):
             for edit in self.inputs.values(): edit.clear()
 
     def apply_manual_changes(self):
-        """Aplica mudanças via input numérico"""
         sel = self.scene.selectedItems()
         if len(sel) == 1:
             try:

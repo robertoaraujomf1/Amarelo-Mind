@@ -286,12 +286,18 @@ class AmareloMainWindow(QMainWindow):
             if hasattr(item, 'toggle_shadow'):
                 item.toggle_shadow()
 
+    
     def on_selection_changed(self):
-        sel = self.scene.selectedItems()
-        if len(sel) == 1 and hasattr(sel[0], 'rect'):
-            item = sel[0]
-            self.in_x.setText(str(int(item.pos().x()))); self.in_y.setText(str(int(item.pos().y())))
-            self.in_w.setText(str(int(item.rect().width()))); self.in_h.setText(str(int(item.rect().height())))
+        try:
+            # Verifica se a cena ainda existe antes de pedir os itens
+            if self.scene is None:
+                return
+                
+            sel = self.scene.selectedItems()
+            # ... resto do seu código
+        except RuntimeError:
+            # Se o objeto foi deletado bem na hora da chamada, apenas ignore
+            pass
 
     def apply_status_changes(self):
         sel = self.scene.selectedItems()

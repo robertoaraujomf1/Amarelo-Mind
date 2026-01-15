@@ -27,3 +27,17 @@ class AddNodeCommand(QUndoCommand):
 
     def redo(self):
         self.scene.addItem(self.node)
+
+    from PySide6.QtGui import QUndoCommand
+
+class AddNodeCommand(QUndoCommand):
+    def __init__(self, scene, node):
+        super().__init__("Adicionar Objeto")
+        self.scene = scene
+        self.node = node
+
+    def redo(self):
+        self.scene.addItem(self.node)
+
+    def undo(self):
+        self.scene.removeItem(self.node)
